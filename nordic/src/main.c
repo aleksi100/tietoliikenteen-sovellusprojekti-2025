@@ -46,6 +46,7 @@ LOG_MODULE_REGISTER(Lesson4_Exercise2, LOG_LEVEL_INF);
 #define NOTIFY_INTERVAL 500
 static bool app_button_state;
 static struct k_work adv_work;
+short userbuttonstatus = 0;
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -94,10 +95,10 @@ void send_data_thread(void)
 	while (1) {
 	
 		struct Measurement m = readADCValue();
-		printk("%d %d %d \n", m.x, m.y, m.z);
-		my_lbs_send_sensor_notify(m);
+		//printk("%d %d %d %d \n", m.x, m.y, m.z, userbuttonstatus);
+		my_lbs_send_sensor_notify(m, userbuttonstatus);
 
-		k_sleep(K_MSEC(NOTIFY_INTERVAL));
+		k_sleep(K_MSEC(1000));
 	}
 }
 
@@ -108,9 +109,18 @@ static struct my_lbs_cb app_callbacks = {
 
 static void button_changed(uint32_t button_state, uint32_t has_changed)
 {
+
 	if (has_changed & USER_BUTTON) {
 		uint32_t user_button_state = button_state & USER_BUTTON;
 		/* STEP 6 - Send indication on a button press */
+
+		if (user_button_state) {
+			userbuttonstatus++;
+			if (userbuttonstatus >5){
+				userbuttonstatus = 0;
+			}
+		}
+	
 		my_lbs_send_button_state_indicate(user_button_state);
 		app_button_state = user_button_state ? true : false;
 	}
@@ -154,7 +164,7 @@ static int init_button(void)
 
 int main(void)
 {
-	int blink_status = 0;
+
 	int err;
 
 	LOG_INF("Tästä lähtee main");
@@ -192,13 +202,6 @@ int main(void)
 	LOG_INF("Bluetooth initialized\n");
 	k_work_init(&adv_work, adv_work_handler);
 	advertising_start();
-	for (;;) {
-		dk_set_led(RUN_STATUS_LED, (++blink_status) % 2);
-		k_sleep(K_MSEC(RUN_LED_BLINK_INTERVAL));
-
-		//struct Measurement m = readADCValue(); 
-		//printk("x = %d, y = %d, z = %d\n",m.x,m.y,m.z);
-	}
 
 }
 /* STEP 18.2 - Define and initialize a thread to send data periodically */

@@ -21,7 +21,7 @@ static const struct adc_dt_spec adc_channels[] = {
 			     DT_SPEC_AND_COMMA)
 };
 
-
+int32_t val_mv;
 
 
 
@@ -77,14 +77,14 @@ struct Measurement readADCValue(void)
 	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) 
     {
 		int err;
-        int32_t val_mv;
+        
         // For debug use... 
 		/*
         printk("- %s, channel %d: ",
 		       adc_channels[i].dev->name,
 		       adc_channels[i].channel_id);
+        
         */
-
 		(void)adc_sequence_init_dt(&adc_channels[i], &sequence);
 
 		err = adc_read(adc_channels[i].dev, &sequence);
@@ -129,7 +129,9 @@ struct Measurement readADCValue(void)
                 m.z = val_mv;
             }           
             //printk(" = %"PRId32" mV\n", val_mv);
+            //printk("Loop start\n");
 		}
 	}
+    printk("%d %d %d \n", m.x, m.y, m.z);
     return m;
 }

@@ -134,6 +134,7 @@ int my_lbs_send_button_state_indicate(bool button_state)
 	if (!indicate_enabled) {
 		return -EACCES;
 	}
+
 	ind_params.attr = &my_lbs_svc.attrs[2];
 	ind_params.func = indicate_cb; // A remote device has ACKed at its host layer (ATT ACK)
 	ind_params.destroy = NULL;
@@ -143,21 +144,18 @@ int my_lbs_send_button_state_indicate(bool button_state)
 }
 
 /* STEP 14 - Define the function to send notifications for the MYSENSOR characteristic */
-int my_lbs_send_sensor_notify(struct Measurement m)
+int my_lbs_send_sensor_notify(struct Measurement m, short userbuttonstatus)
 {
     if (!notify_mysensor_enabled) {
         return -EACCES;
     }
 
-    // Format the values as a space-separated string
-    char buf[32]; // Large enough to hold "1666 1640 1980" + null terminator
-    int len = snprintf(buf, sizeof(buf), "%d %d %d", m.x, m.y, m.z);
+    char buf[32]; 
+    int len = snprintf(buf, sizeof(buf), "%d %d %d %d", m.x, m.y, m.z, userbuttonstatus);
+	printk("%d %d %d %d \n", m.x, m.y, m.z, userbuttonstatus);
 
-    // Ensure the string is null-terminated and fits in the buffer
     if (len < 0 || len >= sizeof(buf)) {
         return -EINVAL;
     }
-
-    // Send the string over BLE
     return bt_gatt_notify(NULL, &my_lbs_svc.attrs[7], (uint8_t *)buf, len);
 }

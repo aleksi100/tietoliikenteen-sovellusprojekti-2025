@@ -104,7 +104,7 @@ int my_lbs_send_button_state_notify(bool button_state);
  * @retval 0 If the operation was successful.
  *           Otherwise, a (negative) error code is returned.
  */
-int my_lbs_send_sensor_notify(struct Measurement m);
+int my_lbs_send_sensor_notify(struct Measurement m, short userbuttonstatus);
 
 #ifdef __cplusplus
 }
