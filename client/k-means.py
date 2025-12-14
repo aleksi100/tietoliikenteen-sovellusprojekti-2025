@@ -33,30 +33,38 @@ Y = data[:,3]
 X = data[:,0:3]
 Z = data[:, 2]
 
-center_points = data[np.random.choice(len(data), 6, replace=False)]
-print("Alkuperäiset")
-print(center_points)
-print("----------------")
+K = 6
+max_iters = 30
 
-centerPointCumulativeSum = np.zeros((6,3))
-Counts = np.zeros(6)
+dmax = np.max(data)
+dmin = np.min(1200)
+center_points = np.random.randint(dmin,dmax,size=(6,3))
+center_points = np.random.randint(dmin,dmax,size=(6,3))
+print(dmin)
+print(dmax)
+print("Initial centers:\n", center_points, "\n")
 
-for i in range(data.shape[0]):
-    point = data[i]
-    distance = np.zeros(6)
+for iteration in range(max_iters):
+    distances = np.linalg.norm(X[:, None, :] - center_points[None, :, :], axis=2)
+    print("Distances shape: ", distances.shape)
+    
+    cluster_id = np.argmin(distances, axis=1)
 
-    for c in range(6):
-        distance[c] = np.linalg.norm(point[0:3] - center_points[c,0:3])
+    
+    new_centers = np.array([
+        X[cluster_id == k].mean(axis=0) if np.any(cluster_id == k) else np.random.randint(dmin,dmax,size=(3))
+        for k in range(K)
+    ])
 
-    smallest_idx = np.argmin(distance)
-    Counts[smallest_idx] += 1
-    centerPointCumulativeSum[smallest_idx] += point[0:3]
+    
+    if np.allclose(center_points, new_centers):
+        print(f"Converged after {iteration+1} iterations.\n")
+        #break
 
+    center_points = new_centers
 
-updated_centers = centerPointCumulativeSum / Counts[:, None]
+print("Final centers:\n", center_points)
 
-print("Siirretyt")
-print(updated_centers)
 
 
 from mpl_toolkits.mplot3d import Axes3D
@@ -64,8 +72,6 @@ from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
 
-# Plot all points
-#ax.scatter(X, Y, Z, c='blue', s=5, alpha=0.5, label='Data Points')
 
 ax.scatter(X[:,0], X[:,1], X[:,2], c='blue', s=5, alpha=0.5, label='Data Points')
 
@@ -75,20 +81,10 @@ ax.scatter(
     center_points[:,1],
     center_points[:,2],
     c='red',
-    s=80,
+    s=180,
     marker='X',
     label='Center Points'
     
-)
-
-ax.scatter(
-    updated_centers[:,0],
-    updated_centers[:,1],
-    updated_centers[:,2],
-    c='green',
-    s=100,
-    marker='D',
-    label='Updated Cluster Centers'
 )
 
 
@@ -100,13 +96,9 @@ ax.legend()
 
 plt.show()
 
-# Oletetaan, että updated_centers on muotoa (6,3)
-# ja sisältää keskipisteiden koordinaatit kokonaislukuina
 
-# Muunna float -> int, jos haluat kokonaisarvot
-CP = updated_centers.astype(int)
+CP = center_points.astype(int)
 
-# Luo tiedosto
 with open("keskipisteet.h", "w") as f:
     f.write("int CP[6][3] = {\n")
     for i, row in enumerate(CP):
@@ -125,32 +117,3 @@ print("Tiedosto 'keskipisteet.h' luotu onnistuneesti!")
 
 
 
-
-
-
-'''''
-for o in range(scaled_points.shape[0]):
-    for i in range(data.shape[0]):
-        point1 = data[i]
-        point2 = scaled_points[o]
-        lyhyin = np.linalg.norm(point1-point2)
-        
-
-
-
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-ax.scatter(X, Y, Z)
-
-ax.set_xlabel("X")
-ax.set_ylabel("Y")
-ax.set_zlabel("Z")
-
-ax.scatter(center_points[:,0], center_points[:,1], center_points[:,2],
-           color='red', s=100, marker='X', label='Center Points')
-
-plt.show()
-
-'''
